@@ -2,6 +2,7 @@ import json
 import pymysql
 
 import query_suite
+import math_util
 
 
 #read config file
@@ -36,12 +37,17 @@ r = qs.get_ttsid_on_trip(
     dailytripid="-5016615278318514860",
     yymmddhhmm="1712011704")
 print(r)
+letzteZugInfo = None
 for x in r:
     #print(x[0])
-    zug = qs.get_tts_by_ttsid(x[0])
-    zug = qs.select(zug, columns=[1,9])
-    evanr = qs.get_stationname_by_evanr(zug[0][1])
-    print(zug, evanr)
+    zugInfo = qs.get_tts_by_ttsid(x[0])
+    if letzteZugInfo is not None:
+        print("driven Time:\t", math_util.calculate_driventime(zugInfo, letzteZugInfo))
+    letzteZugInfo = zugInfo
+    timeTableStopId = qs.select(zugInfo, columns=[1, 9])
+    StationName = qs.get_stationname_by_evanr(timeTableStopId[0][1])
+    print(timeTableStopId, StationName, "Stay Time: ", math_util.calculate_staytime(zugInfo))
+
 
 
 #clean up
