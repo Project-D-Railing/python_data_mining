@@ -1,0 +1,1 @@
+py -i -c "exec(open(\"interactive.py\").read())"
