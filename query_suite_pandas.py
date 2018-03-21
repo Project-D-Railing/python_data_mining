@@ -153,7 +153,7 @@ class QuerySuite:
             .format(evanr)
         result = self._do_query(query)
         
-        result_df = pd.DataFrame(data=list(result), columns=["stationnames"])
+        result_df = pd.DataFrame(data=list(result), columns=["stationname"])
         result_df = self._concat_query_info_to_data_frame(
             result_df, evanr, "evanr")
         return result_df
