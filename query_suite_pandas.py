@@ -32,7 +32,7 @@ class QuerySuite:
         """
         self.limit = limit
         return self
-
+    
     
     # class helper functions ###################################################
     def _append_limit_to_query(self, query):
@@ -73,6 +73,19 @@ class QuerySuite:
         return result_df
     
     
+    #function from https://gist.github.com/hellpanderrr/599bce82ecc6934aa9e1
+    def _sort_df(self, df, column_idx, key):
+        '''Takes dataframe, column index and custom function for sorting, 
+        returns dataframe sorted by this column using this function'''
+        col = df.ix[:,column_idx]
+        temp = pd.DataFrame([])
+        temp[0] = col
+        temp[1] = df.index
+        temp = temp.values.tolist()
+        df = df.ix[[i[1] for i in sorted(temp, key=key)]]
+        return df
+    
+    
     # query processing functions ###############################################
     def select(self, data, columns):
         """ 
@@ -88,7 +101,7 @@ class QuerySuite:
             result = result + (newrow,)
         return result      
     
-        
+    
     # basic queries ############################################################
     def get_tts_by_ttsid(self, ttsid):
         """
@@ -154,28 +167,26 @@ class QuerySuite:
         matching the ttsid with the given dailytripid an datetime pattern. 
         Stations are sortet in the order of the trip.
         """
-        qs = self
-        q_ttsid = qs.get_ttsid_like(
+        ttsid = self.get_ttsid_like(
             dailytripid=dailytripid, yymmddhhmm=yymmddhhmm)
-        
-        q_ttsid_sorted = qs.sort_by_stopindex(q_ttsid)
-        return q_ttsid_sorted
-        
+        ttsid_sorted = self.sort_by_stopindex(ttsid, column=0)
+        #get rid of the extra colums that come with 'get_ttsid_like'
+        return pd.DataFrame(ttsid_sorted.reset_index()["ttsid"])
     
-    def sort_by_stopindex(self, data, column=0):
+    
+    def sort_by_stopindex(self, df, column):
         """ 
-        Sorts given data by the stop index of the ttsid in ascending order. 
-        'column' specifies the column index of the tuples inside the data tuple
-        that hold the dailytripid.
+        Sorts given data frame by the stop index of the ttsid in ascending 
+        order.
+        'column' specifies column of the ttsid
         """
         def access_stopindex(x):
             """
             This function helps the sorting function to access the stop index
             inside the ttsid by using regex and convert it to integer.
             """
-            dailytripid = x[column]
-            stopindex = re.search("-?[0-9]*-[0-9]*-([0-9]+)", dailytripid)
+            stopindex = re.search("-?[0-9]*-[0-9]*-([0-9]+)", x[0])
             stopindex = stopindex.group(1)
             return int(stopindex)
             
-        return sorted(data, key=access_stopindex)
+        return self._sort_df(df, column, access_stopindex)
