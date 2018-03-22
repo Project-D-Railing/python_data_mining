@@ -30,14 +30,14 @@ def calc_staytime_df(train_stop):
     Returns a pandas dataframe with columns 'staytime', 'ttsid'.
     """
     if train_stop["arzeitist"][0] is None or train_stop["dpzeitist"][0] is None:
-        return datetime.timedelta(0)
+        staytime = datetime.timedelta(0)
+    else:
+        arrival = datetime.datetime.combine(train_stop["datum"][0],
+            (datetime.datetime.min + train_stop["arzeitist"][0]).time())
+        departure = datetime.datetime.combine(train_stop["datum"][0],
+            (datetime.datetime.min + train_stop["dpzeitist"][0]).time())
+        staytime = departure - arrival
 
-    arrival = datetime.datetime.combine(train_stop["datum"][0],
-        (datetime.datetime.min + train_stop["arzeitist"][0]).time())
-    departure = datetime.datetime.combine(train_stop["datum"][0],
-        (datetime.datetime.min + train_stop["dpzeitist"][0]).time())
-
-    staytime = departure - arrival
     ttsid = train_stop["ttsid"][0]
     result = pd.DataFrame(data=[[staytime, ttsid]], columns=["staytime", "ttsid"])
     return result
