@@ -16,7 +16,6 @@ def connect_with_config(config, property):
     config_file.close()
 
     #get config data
-    print(configuration)
     dbc_config = configuration[property]
 
     #connect to db
