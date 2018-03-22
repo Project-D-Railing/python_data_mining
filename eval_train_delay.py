@@ -15,27 +15,23 @@ qsp.set_limit(5000)
 ttsids = qsp.get_ttsid_on_trip(dailytripid="-5016615278318514860", yymmddhhmm="1712011704")
 print(ttsids)
 
+delay_arrivals = pd.DataFrame();
+delay_depatures = pd.DataFrame();
 
-stay_times = pd.DataFrame()
-travel_times = pd.DataFrame()
-last_train_stop = None
 for index, row in ttsids.iterrows():
     train_stop = qsp.get_tts_by_ttsid(row["ttsid"])
-    stay_times.append(pd.DataFrame([[1,2],[3,4]]))
-    if last_train_stop is not None:
-        travel_time = pu.calc_traveltime_real_df(last_train_stop, train_stop)
-        travel_times = travel_times.append(travel_time)
-        print("Travel Time:\t", travel_time)
-    last_train_stop = train_stop
     station_name = qsp.get_stationname_by_evanr(train_stop["evanr"][0])
     print(train_stop)
     print(station_name)
-    stay_time = pu.calc_staytime_real_df(train_stop)
-    stay_times = stay_times.append(stay_time)
-    print("Stay Time: ", stay_time)
+    delay_arrival = pu.calc_delay_at_arrival_df(train_stop)
+    delay_arrivals = delay_arrivals.append(delay_arrival)
+    delay_depature = pu.calc_delay_at_departure_df(train_stop)
+    delay_depatures = delay_depatures.append(delay_depature)
+    print("Delay at Arrival: ", delay_arrival)
+    print("Delay at Departure: ", delay_depature)
 
-print(stay_times)
-print(travel_times)
+print(delay_arrivals)
+print(delay_depatures)
 
 #clean up
 dbc.close()
