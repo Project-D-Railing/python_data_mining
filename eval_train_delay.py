@@ -83,8 +83,6 @@ print(delay_by_staytime_accum)
 print(delay_by_traveltime_accum)
 
 
-print(delay_by_traveltime_accum.reset_index().to_json())
-
 #clean up
 dbc.close()
 
