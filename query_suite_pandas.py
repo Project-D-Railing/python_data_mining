@@ -8,7 +8,10 @@ LOG_TO_CONSOLE = True
 #labels for table "time table stops" (named "zuege" in database)
 TABLE_LABELS_TTS = ["id", "ttsid", "zugverkehrstyp", "zugtyp", "zugowner",
     "zugklasse", "zugnummer", "zugnummerfull", "linie", "evanr", "arzeitsoll",
-    "arzeitist", "dpzeitsoll", "dpzeitist", "gleissoll", "gleisist", "datum", "streckengeplanthash", "streckenchangedhash", "zugstatus"]
+    "arzeitist", "dpzeitsoll", "dpzeitist", "gleissoll", "gleisist", "datum",
+    "streckengeplanthash", "streckenchangedhash", "zugstatus"]
+
+TABLE_LABELS_TTS_WITH_STATIONNAME = TABLE_LABELS_TTS + ["stationname"]
 
 
 class QuerySuite:
@@ -157,7 +160,19 @@ class QuerySuite:
         result_df = self._concat_query_info_to_data_frame(
             result_df, evanr, "evanr")
         return result_df
-        
+
+
+    def get_tts_with_stationnames_on_trip(self, dailytripid, yymmddhhmm):
+        query = "SELECT zuege.*, haltestellen.NAME FROM zuege, haltestellen" + \
+                " WHERE zuege.evanr = haltestellen.EVA_NR AND zuege.zugid like \"{}-{}-%\" ORDER BY arzeitsoll ASC" \
+            .format(dailytripid, yymmddhhmm)
+        result = self._do_query(query)
+
+        result_df = pd.DataFrame(data=list(result), columns=TABLE_LABELS_TTS_WITH_STATIONNAME)
+        result_df = self._concat_query_info_to_data_frame(result_df, dailytripid, "dailytripid")
+        result_df = self._concat_query_info_to_data_frame(result_df, yymmddhhmm, "yymmddhhmm")
+        return result_df
+
         
     # adcanced queries #########################################################
     def get_ttsid_on_trip(self, dailytripid, yymmddhhmm):
