@@ -4,7 +4,7 @@ import pandas as pd
 LOG_TO_CONSOLE = True
 
 # labels for table "time table stops" (named "zuege" in database)
-TABLE_LABELS_TTS = ["id", "ttsid", "dailytripid", "yymmddhhmm", "stopid", "zugverkehrstyp", "zugtyp", "zugowner",
+TABLE_LABELS_TTS = ["id", "ttsid", "dailytripid", "yymmddhhmm", "stopindex", "zugverkehrstyp", "zugtyp", "zugowner",
                     "zugklasse", "zugnummer", "zugnummerfull", "linie", "evanr", "arzeitsoll",
                     "arzeitist", "dpzeitsoll", "dpzeitist", "gleissoll", "gleisist", "datum",
                     "streckengeplanthash", "streckenchangedhash", "zugstatus"]
@@ -141,9 +141,12 @@ class QuerySuite:
 
 
     def _get_tts_with_stationnames_on_trip_query(self, dailytripid, yymmddhhmm):
-        query = "SELECT zuege.*, haltestellen.NAME FROM zuege, haltestellen" + \
-                " WHERE zuege.evanr = haltestellen.EVA_NR AND zuege.zugid like \"{}-{}-%\" ORDER BY arzeitsoll ASC" \
-                    .format(dailytripid, yymmddhhmm)
+        query = "SELECT zuege.*, haltestellen.NAME FROM zuege " \
+                "INNER JOIN haltestellen ON zuege.evanr = haltestellen.EVA_NR " \
+                "WHERE zuege.dailytripid = {} " \
+                "AND zuege.yymmddhhmm = {} " \
+                "ORDER BY arzeitsoll ASC"
+        query = query.format(dailytripid, yymmddhhmm)
         result = self._do_query(query)
         return result
 

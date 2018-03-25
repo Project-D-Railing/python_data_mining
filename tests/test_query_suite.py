@@ -39,7 +39,7 @@ def test_get_tts_by_ttsid__check_query_result_and_df_structure(qs:query_suite.Qu
     assert tts["ttsid"][0] == '-4535481750358179783-1712111144-6'
     assert tts["dailytripid"][0] == -4535481750358179783
     assert tts["yymmddhhmm"][0] == 1712111144
-    assert tts["stopid"][0] == 6
+    assert tts["stopindex"][0] == 6
     assert tts["zugverkehrstyp"][0] == 'S'
     assert tts["zugtyp"][0] == 'p'
     assert tts["zugowner"][0] == '800725'
@@ -78,7 +78,7 @@ def test_get_tts_with_stationnames_on_trip(qs:query_suite.QuerySuite):
     assert tts["ttsid"][0] == '-9190105377711815761-1712111109-1'
     assert tts["dailytripid"][0] == -9190105377711815761
     assert tts["yymmddhhmm"][0] == 1712111109
-    assert tts["stopid"][0] == 1
+    assert tts["stopindex"][0] == 1
     assert tts["zugverkehrstyp"][0] == 'N'
     assert tts["zugtyp"][0] == 'p'
     assert tts["zugowner"][0] == 'K4RB'
