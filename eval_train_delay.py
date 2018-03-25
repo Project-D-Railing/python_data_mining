@@ -1,5 +1,5 @@
-import database_connection as db_con
-import query_suite_pandas
+import database_connection
+import query_suite
 import processing_utils as pu
 
 import pandas as pd
@@ -7,17 +7,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 #setup database connection
-dbc = db_con.connect_with_config(
+dbc = database_connection.connect_with_config(
     config="app_config.json", property="dbcconfig")
 
 #setup query suite
-qsp = query_suite_pandas.QuerySuite()
-qsp.use_dbc(dbc)
-qsp.set_limit(5000)
+qs = query_suite.QuerySuite()
+qs.use_dbc(dbc)
+qs.set_limit(5000)
 
 
 #get stops on trip
-tts_with_stationname_df = qsp.get_tts_with_stationnames_on_trip(
+tts_with_stationname_df = qs.get_tts_with_stationnames_on_trip(
     dailytripid="-6843069272511463904", yymmddhhmm="1712011109")
 
 #dataframes for accumulating results
