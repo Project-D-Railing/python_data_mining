@@ -18,7 +18,7 @@ qs.set_limit(5000)
 
 #get stops on trip
 tts_with_stationname_df = qs.get_tts_with_stationnames_on_trip(
-    dailytripid="-6843069272511463904", yymmddhhmm="1712011109")
+    dailytripid=1307784265419680067, yymmddhhmm=1712111209)
 
 #dataframes for accumulating results
 staytime_scheduled_accum = pd.DataFrame()

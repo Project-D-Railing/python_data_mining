@@ -4,7 +4,7 @@ import pandas as pd
 LOG_TO_CONSOLE = True
 
 # labels for table "time table stops" (named "zuege" in database)
-TABLE_LABELS_TTS = ["id", "ttsid", "zugverkehrstyp", "zugtyp", "zugowner",
+TABLE_LABELS_TTS = ["id", "ttsid", "dailytripid", "yymmddhhmm", "stopid", "zugverkehrstyp", "zugtyp", "zugowner",
                     "zugklasse", "zugnummer", "zugnummerfull", "linie", "evanr", "arzeitsoll",
                     "arzeitist", "dpzeitsoll", "dpzeitist", "gleissoll", "gleisist", "datum",
                     "streckengeplanthash", "streckenchangedhash", "zugstatus"]
@@ -140,7 +140,7 @@ class QuerySuite:
         return result_df
 
 
-    def _get_tts_with_stationnames_on_trip(self, dailytripid, yymmddhhmm):
+    def _get_tts_with_stationnames_on_trip_query(self, dailytripid, yymmddhhmm):
         query = "SELECT zuege.*, haltestellen.NAME FROM zuege, haltestellen" + \
                 " WHERE zuege.evanr = haltestellen.EVA_NR AND zuege.zugid like \"{}-{}-%\" ORDER BY arzeitsoll ASC" \
                     .format(dailytripid, yymmddhhmm)
@@ -155,8 +155,6 @@ class QuerySuite:
         :param yymmddhhmm: sppecifies the date and time.
         :return: pandas dataframe.
         """
-        result = self._get_tts_with_stationnames_on_trip(dailytripid, yymmddhhmm)
+        result = self._get_tts_with_stationnames_on_trip_query(dailytripid, yymmddhhmm)
         result_df = pd.DataFrame(data=list(result), columns=TABLE_LABELS_TTS_WITH_STATIONNAME)
-        result_df = self._concat_query_info_to_data_frame(result_df, dailytripid, "dailytripid")
-        result_df = self._concat_query_info_to_data_frame(result_df, yymmddhhmm, "yymmddhhmm")
         return result_df
