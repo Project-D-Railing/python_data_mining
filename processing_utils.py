@@ -2,6 +2,19 @@ import datetime
 import pandas as pd
 
 
+# function from https://gist.github.com/hellpanderrr/599bce82ecc6934aa9e1
+def _sort_df(self, df, column_idx, key):
+    '''Takes dataframe, column index and custom function for sorting,
+    returns dataframe sorted by this column using this function'''
+    col = df.ix[:, column_idx]
+    temp = pd.DataFrame([])
+    temp[0] = col
+    temp[1] = df.index
+    temp = temp.values.tolist()
+    df = df.ix[[i[1] for i in sorted(temp, key=key)]]
+    return df
+
+
 def calc_staytime_scheduled_df(train_stop_df):
     """
     Calculates the scheduled staytime at train stop.
