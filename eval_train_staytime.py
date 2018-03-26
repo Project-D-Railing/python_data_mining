@@ -1,16 +1,10 @@
-import database_connection
 import query_suite
 import processing_utils as pu
 
 import pandas as pd
 
-dbc = database_connection.connect_with_config(
-    config="app_config.json", property="dbcconfig")
-
-#setup query suite
-qs = query_suite.QuerySuite()
-qs.use_dbc(dbc)
-qs.set_limit(5000)
+# setup query suite
+qs = query_suite.QuerySuite(config="app_config.json", property_name="dbcconfig", limit=5000)
 
 
 ttsids = qs.get_ttsid_on_trip(dailytripid="-5016615278318514860", yymmddhhmm="1712011704")
@@ -38,6 +32,6 @@ print(stay_times)
 print(travel_times)
 
 
-#clean up
-dbc.close()
+# clean up
+qs.disconnect()
 
