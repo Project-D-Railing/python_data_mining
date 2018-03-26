@@ -1,5 +1,7 @@
 import re
 import pandas as pd
+import pymysql
+import json
 
 LOG_TO_CONSOLE = True
 
@@ -17,6 +19,38 @@ class QuerySuite:
     dbc = None
     limit = 50
 
+    def __init__(self, config, property_name, limit):
+        """
+        Builds and return a connection to a mysql database using a json
+        configuration file for connection details.
+        'config': specifies file name of json config file
+        'property': holds property name inside the json file that holds the details
+            for the database connection.
+        """
+        # read config file
+        config_file = open(config, "r", encoding='utf-8-sig', newline='\r\n')
+        configuration = json.loads(config_file.read())
+        config_file.close()
+
+        # get config data
+        dbc_config = configuration[property_name]
+
+        # connect to db
+        try:
+            self.dbc = pymysql.connect(**dbc_config)
+        except pymysql.connector.Error as err:
+            print(err)
+            self.dbc = None
+
+        self.set_limit(limit)
+
+    def disconnect(self):
+        """
+        Sets the data base connection to be used for queries.
+        """
+        self.dbc.close()
+        self.dbc = None
+        return self
 
     def use_dbc(self, dbc):
         """
@@ -25,7 +59,6 @@ class QuerySuite:
         self.dbc = dbc
         return self
 
-
     def set_limit(self, limit):
         """
         Sets the limit for sql queries. set the limit to the NO_QUERY_LIMIT
@@ -33,7 +66,6 @@ class QuerySuite:
         """
         self.limit = limit
         return self
-
 
     # class helper functions ###################################################
     def _append_limit_to_query(self, query):
@@ -44,7 +76,6 @@ class QuerySuite:
         if self.limit != self.NO_QUERY_LIMIT:
             query = query + " LIMIT {}".format(self.limit)
         return query
-
 
     def _do_query(self, query):
         """
@@ -60,7 +91,6 @@ class QuerySuite:
         result = cursor.fetchall()
         cursor.close()
         return result
-
 
     def _concat_query_info_to_data_frame(self, df, info, columnname):
         """
