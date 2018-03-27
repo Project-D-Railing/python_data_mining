@@ -1,6 +1,7 @@
 import re
 import pandas as pd
 import pymysql
+import json
 
 LOG_TO_CONSOLE = True
 
@@ -189,4 +190,22 @@ class QuerySuite:
         """
         result = self._get_tts_with_stationnames_on_trip_query(dailytripid, yymmddhhmm)
         result_df = pd.DataFrame(data=list(result), columns=TABLE_LABELS_TTS_WITH_STATIONNAME)
+        return result_df
+
+    def get_station_with_tts(self, dailytripid, stopindex):
+        """
+        Retrieves all time table stop ids (ttsid, named 'zugid' in database)
+        that match the specified SQL pattern.
+        'dailytripid' specifies pattern for the dailytripid.
+        'yymmddhhmm' specifies the pattern for the second part of the zugid.
+        'stopindex' specifies the pattern for the third part of the zugid.
+        """
+
+        query = "SELECT zuege.zugid, zuege.evanr, zuege.arzeitist, zuege.arzeitsoll, zuege.dpzeitist, zuege.dpzeitsoll, zuege.datum" \
+                " FROM `zuege` WHERE zuege.stopid = \"{}\" AND dailytripid = \"{}\" " \
+            .format(stopindex, dailytripid)
+        result = self._do_query(query)
+
+        result_df = pd.DataFrame(data=list(result),
+                                 columns=["ttsid", "evanr", "arzeitist", "arzeitsoll", "dpzeitist", "dpzeitsoll", "datum"])
         return result_df

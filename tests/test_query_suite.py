@@ -1,26 +1,15 @@
 import pytest
-import database_connection
 import query_suite
 import datetime
 import pandas as pd
 
 
-@pytest.fixture(scope="module")
-def dbc():
-    #setup database connection
-    dbc = database_connection.connect_with_config(
-        config="app_config.json", property="dbcconfig")
-    yield dbc
-    #teardown
-    dbc.close()
-
-
 @pytest.fixture()
-def qs(dbc):
+def qs():
     #setup query suite pandas
-    qs = query_suite.QuerySuite()
-    qs.use_dbc(dbc)
+    qs = query_suite.QuerySuite(config="app_config.json", property_name="dbcconfig", limit=5000)
     yield qs
+    qs.disconnect()
     #teardown
 
 
