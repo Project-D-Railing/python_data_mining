@@ -44,18 +44,14 @@ for index, row in tts_with_stationname_df.iterrows():
     delay_by_staytime = pu.calc_delay_by_staytime_df(train_stop)
     delay_by_staytime_accum = delay_by_staytime_accum.append(delay_by_staytime, ignore_index=True)
 
-    traveltime_scheduled = None
-    traveltime_real = None
-    delay_by_traveltime = None
-    if train_stop_old is not None:
-        traveltime_scheduled = pu.calc_traveltime_scheduled_df(train_stop_old, train_stop)
-        traveltime_scheduled_accum = traveltime_scheduled_accum.append(traveltime_scheduled, ignore_index=True)
+    traveltime_scheduled = pu.calc_traveltime_scheduled_df(train_stop_old, train_stop)
+    traveltime_scheduled_accum = traveltime_scheduled_accum.append(traveltime_scheduled, ignore_index=True)
 
-        traveltime_real = pu.calc_traveltime_real_df(train_stop_old, train_stop)
-        traveltime_real_accum = traveltime_real_accum.append(traveltime_real, ignore_index=True)
+    traveltime_real = pu.calc_traveltime_real_df(train_stop_old, train_stop)
+    traveltime_real_accum = traveltime_real_accum.append(traveltime_real, ignore_index=True)
 
-        delay_by_traveltime = pu.calc_delay_by_traveltime_df(train_stop_old, train_stop)
-        delay_by_traveltime_accum = delay_by_traveltime_accum.append(delay_by_traveltime, ignore_index=True)
+    delay_by_traveltime = pu.calc_delay_by_traveltime_df(train_stop_old, train_stop)
+    delay_by_traveltime_accum = delay_by_traveltime_accum.append(delay_by_traveltime, ignore_index=True)
 
     # make step
     train_stop_old = train_stop
