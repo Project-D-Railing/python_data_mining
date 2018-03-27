@@ -58,22 +58,22 @@ for index, row in tts_with_stationname_df.iterrows():
 
 # visualize results
 delay_at_arrival_minutes = [t.total_seconds() / 60.0 for t in delay_at_arrival_accum["delay_at_arrival"]]
-delay_at_departure_minutes = [t.total_seconds() / 60.0 for t in delay_at_departure_accum["delay_at_departure"]]
 delay_by_staytime_minutes = [t.total_seconds() / 60.0 for t in delay_by_staytime_accum["delay_by_staytime"]]
 delay_by_traveltime_minutes = [t.total_seconds() / 60.0 for t in delay_by_traveltime_accum["delay_by_traveltime"]]
 
+zugnummerfull = tts_with_stationname_df[0:1]["zugnummerfull"][0]
+datum = tts_with_stationname_df[0:1]["datum"][0].strftime("%d.%m.%Y")
+title = zugnummerfull + " am " + datum
+legend = ["Verspätung bei Ankuft", "Verspätung durch Haltezeit", "Verspätung durch Fahrtzeit"]
+
 plt.figure(figsize=(14, 7))
-plt.plot(delay_at_arrival_minutes, linewidth=2.0, alpha=0.7)
-plt.plot(delay_at_departure_minutes, linewidth=2.0, alpha=0.7)
-plt.plot(delay_by_staytime_minutes, linewidth=2.0, alpha=0.7)
-plt.plot(delay_by_traveltime_minutes, linewidth=2.0, alpha=0.7)
-# title: %zugnummerfull% am %dd.mm.yyyy%
-plt.title(tts_with_stationname_df[0:1]["zugnummerfull"][0] + " am " +
-          tts_with_stationname_df[0:1]["datum"][0].strftime("%d.%m.%Y"))
-plt.legend(['Verspätung bei Ankuft', "Verspätung bei Abfahrt", "Verspätung durch Haltezeit",
-            "Verspätung durch Fahrtzeit"], loc='upper left')
-plt.ylabel('Zeit in Minuten')
+plt.plot(delay_at_arrival_minutes, linewidth=2, color="black")
+plt.plot(delay_by_staytime_minutes, linewidth=2, color="orange")
+plt.plot(delay_by_traveltime_minutes, linewidth=2, color="red")
+plt.title(title)
+plt.legend(legend, loc='upper left')
 plt.xticks(np.arange(len(tts_with_stationname_df)), tts_with_stationname_df["stationname"], rotation=67)
+plt.ylabel('Zeit in Minuten')
 plt.grid(True)
 plt.subplots_adjust(bottom=0.3)
 plt.show()
