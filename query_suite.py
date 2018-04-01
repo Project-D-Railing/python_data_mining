@@ -3,7 +3,7 @@ import pandas as pd
 import pymysql
 import json
 
-LOG_TO_CONSOLE = True
+LOG_TO_CONSOLE = False
 
 # labels for table "time table stops" (named "zuege" in database)
 TABLE_LABELS_TTS = ["id", "ttsid", "dailytripid", "yymmddhhmm", "stopindex", "zugverkehrstyp", "zugtyp", "zugowner",
@@ -123,7 +123,7 @@ class QuerySuite:
 
 
     def _get_ttsid_like_query(self, dailytripid, yymmddhhmm, stopindex):
-        query = "SELECT zuege.zugid FROM zuege WHERE zuege.zugid like \"{}-{}-{}\"" \
+        query = "SELECT zuege.zugid, zuege.dailytripid, zuege.yymmddhhmm, zuege.stopid FROM zuege WHERE zuege.zugid like \"{}-{}-{}\"" \
             .format(dailytripid, yymmddhhmm, stopindex)
         result = self._do_query(query)
         return result
@@ -145,10 +145,7 @@ class QuerySuite:
             stopindex = "%"
 
         result = self._get_ttsid_like_query(dailytripid, yymmddhhmm, stopindex)
-        result_df = pd.DataFrame(data=list(result), columns=["ttsid"])
-        result_df = self._concat_query_info_to_data_frame(result_df, dailytripid, "dailytripid")
-        result_df = self._concat_query_info_to_data_frame(result_df, yymmddhhmm, "yymmddhhmm")
-        result_df = self._concat_query_info_to_data_frame(result_df, stopindex, "stopindex")
+        result_df = pd.DataFrame(data=list(result), columns=["ttsid", "dailytripid", "yymmddhhmm","stopid"])
         return result_df
 
 
@@ -201,11 +198,14 @@ class QuerySuite:
         'stopindex' specifies the pattern for the third part of the zugid.
         """
 
-        query = "SELECT zuege.zugid, zuege.evanr, zuege.arzeitist, zuege.arzeitsoll, zuege.dpzeitist, zuege.dpzeitsoll, zuege.datum" \
+        query = "SELECT zuege.zugid, zuege.evanr, zuege.arzeitist, zuege.arzeitsoll, zuege.dpzeitist, zuege.dpzeitsoll, zuege.yymmddhhmm" \
                 " FROM `zuege` WHERE zuege.stopid = \"{}\" AND dailytripid = \"{}\" " \
             .format(stopindex, dailytripid)
         result = self._do_query(query)
 
         result_df = pd.DataFrame(data=list(result),
-                                 columns=["ttsid", "evanr", "arzeitist", "arzeitsoll", "dpzeitist", "dpzeitsoll", "datum"])
+                columns=["ttsid", "evanr", "arzeitist", "arzeitsoll", "dpzeitist", "dpzeitsoll", "yymmddhhmm"])
+        result_df = self._concat_query_info_to_data_frame(result_df, dailytripid, "dailytripid")
+        result_df = self._concat_query_info_to_data_frame(result_df, stopindex, "stopindex")
         return result_df
+
