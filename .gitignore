@@ -2,3 +2,6 @@
 /venv
 /__pycache__
 /.idea
+
+tests/.pytest_cache
+tests/app_config\.json

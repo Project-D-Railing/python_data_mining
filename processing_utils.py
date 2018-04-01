@@ -202,3 +202,15 @@ def calc_delay_at_departure_df(train_stop_df):
 
     result = pd.DataFrame(data=[[delay, ttsid]], columns=["delay_at_departure", "ttsid"])
     return result
+
+
+def calc_average_df(df_to_average, column):
+    """
+    Calculates the Average of an Dataframe column
+    :param  df_to_average: the Dataframe to calculate the Average
+    :param  column: specifies the column
+    :return: value of the Average
+    """
+    summation = df_to_average[column]
+    length = len(df_to_average)
+    return summation / length
