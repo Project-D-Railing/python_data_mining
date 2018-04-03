@@ -209,3 +209,26 @@ class QuerySuite:
         result_df = self._concat_query_info_to_data_frame(result_df, stopindex, "stopindex")
         return result_df
 
+    def get_ttsid_with_trainnumberfull(self, trainnummberfull):
+        """
+        Retrieves the ttsid by given trainumberfull.
+        'trainnummberfull' specifies trainummberfull.
+        """
+        query = "SELECT zuege.dailytripid FROM `zuege` WHERE zuege.zugnummerfull = \"{}\"".format(trainnummberfull)
+        result = self._do_query(query)
+
+        result_df = pd.DataFrame(data=list(result), columns=["dailytripid"])
+        result_df = self._concat_query_info_to_data_frame(result_df, trainnummberfull, "trainnummberfull")
+        return result_df
+
+    def get_trainnumberfull_with_ttsid(self, ttsid):
+        """
+        Retrieves the ttsid by given trainumberfull.
+        'trainnummberfull' specifies trainummberfull.
+        """
+        query = "SELECT zuege.zugnummerfull FROM `zuege` WHERE zuege.dailytripid = {}".format(ttsid)
+        result = self._do_query(query)
+
+        result_df = pd.DataFrame(data=list(result), columns=["dailytripid"])
+        result_df = self._concat_query_info_to_data_frame(result_df, ttsid, "ttsid")
+        return result_df
