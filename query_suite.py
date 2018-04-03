@@ -209,10 +209,10 @@ class QuerySuite:
         result_df = self._concat_query_info_to_data_frame(result_df, stopindex, "stopindex")
         return result_df
 
-    def get_ttsid_with_trainnumberfull(self, trainnummberfull):
+    def get_dtid_with_trainnumberfull(self, trainnummberfull):
         """
-        Retrieves the ttsid by given trainumberfull.
-        'trainnummberfull' specifies trainummberfull.
+        Retrieves the ttsid by given trainnumberfull.
+        'trainnummberfull' specifies trainnummberfull.
         """
         query = "SELECT zuege.dailytripid FROM `zuege` WHERE zuege.zugnummerfull = \"{}\"".format(trainnummberfull)
         result = self._do_query(query)
@@ -221,14 +221,41 @@ class QuerySuite:
         result_df = self._concat_query_info_to_data_frame(result_df, trainnummberfull, "trainnummberfull")
         return result_df
 
-    def get_trainnumberfull_with_ttsid(self, ttsid):
+    def get_trainnumberfull_with_dtid(self, tid):
         """
-        Retrieves the ttsid by given trainumberfull.
+        Retrieves the trainumberfull by given tid .
         'trainnummberfull' specifies trainummberfull.
         """
-        query = "SELECT zuege.zugnummerfull FROM `zuege` WHERE zuege.dailytripid = {}".format(ttsid)
+        query = "SELECT zuege.zugnummerfull FROM `zuege` WHERE zuege.dailytripid = {}".format(tid)
         result = self._do_query(query)
 
-        result_df = pd.DataFrame(data=list(result), columns=["dailytripid"])
-        result_df = self._concat_query_info_to_data_frame(result_df, ttsid, "ttsid")
+        result_df = pd.DataFrame(data=list(result), columns=["trainnumberfull"])
+        result_df = self._concat_query_info_to_data_frame(result_df, tid, "tid")
+        return result_df
+
+    def get_yymmddhhmm_with_date_and_dtid(self, date, dailytripid):
+        """
+        Retrieves the trainnumberfull by given dtid.
+        'dailytripid' specifies dtid.
+        """
+        query = "SELECT zuege.yymmddhhmm FROM `zuege` WHERE zuege.datum = \"{}\" AND zuege.dailytripid = {}"\
+            .format(date, dailytripid)
+        result = self._do_query(query)
+
+        result_df = pd.DataFrame(data=list(result), columns=["yymmddhhmm"])
+        result_df = self._concat_query_info_to_data_frame(result_df, date, "date")
+        return result_df
+
+    def get_date_with_yymmddhhmm(self, yymmddhhmm):
+        """
+        Retrieves the ttsid by given trainnumberfull.
+        'trainnummberfull' specifies trainnummberfull.
+        """
+        self.limit = 5
+        query = "SELECT zuege.datum FROM `zuege` WHERE zuege.yymmddhhmm = \"{}\" GROUP BY datum".format(yymmddhhmm)
+        result = self._do_query(query)
+        self.limit = 1
+
+        result_df = pd.DataFrame(data=list(result), columns=["datum"])
+        result_df = self._concat_query_info_to_data_frame(result_df, yymmddhhmm, "yymmddhhmm")
         return result_df
