@@ -251,11 +251,28 @@ class QuerySuite:
         Retrieves the ttsid by given trainnumberfull.
         'trainnummberfull' specifies trainnummberfull.
         """
+        limit_storage = self.limit
         self.limit = 5
         query = "SELECT zuege.datum FROM `zuege` WHERE zuege.yymmddhhmm = \"{}\" GROUP BY datum".format(yymmddhhmm)
         result = self._do_query(query)
-        self.limit = 1
+        self.limit = limit_storage
 
         result_df = pd.DataFrame(data=list(result), columns=["datum"])
         result_df = self._concat_query_info_to_data_frame(result_df, yymmddhhmm, "yymmddhhmm")
+        return result_df
+
+    def get_Station_information(self, evanr):
+        """
+
+        :param evanr:
+        :return:
+        """
+        limit_storage = self.limit
+        self.limit = 30000
+        query = "SELECT zuege.arzeitist, zuege.arzeitsoll, zuege.dpzeitist, zuege.dpzeitsoll" \
+                " FROM `zuege` WHERE zuege.evanr = \"{}\"".format(evanr)
+        result = self._do_query(query)
+        self.limit = limit_storage
+        result_df = pd.DataFrame(data=list(result), columns=["arzeitist", "arzeitsoll", "dpzeitist", "dpzeitsoll"])
+        result_df = self._concat_query_info_to_data_frame(result_df, evanr, "evanr")
         return result_df

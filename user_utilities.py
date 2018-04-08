@@ -24,5 +24,3 @@ def yymmddhhmmtodate(yymmddhhmm="1712111109"):
     qs = query_suite.QuerySuite(config="app_config.json", property_name="dbcconfig", limit=1)
     date = qs.get_date_with_yymmddhhmm(yymmddhhmm)
     return date
-
-dailytripidtotrainnumberfull()
