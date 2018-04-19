@@ -92,6 +92,21 @@ class QuerySuite:
         cursor.close()
         return result
 
+    def _execute_statement(self, query):
+        """
+        Takes a query as a string and handles quering. Returns the query result
+        as a tuple structure.
+        """
+        if LOG_TO_CONSOLE:
+            print("EXECUTING QUERY: >> " + query + " <<")
+
+        cursor = self.dbc.cursor()
+        cursor.execute(query)
+        result = cursor.fetchall()
+        cursor.close()
+        self.dbc.commit()
+        return result
+
     def _concat_query_info_to_data_frame(self, df, info, columnname):
         """
         Takes the query information and concats it to the given result data
@@ -261,7 +276,7 @@ class QuerySuite:
         result_df = self._concat_query_info_to_data_frame(result_df, yymmddhhmm, "yymmddhhmm")
         return result_df
 
-    def get_Station_information(self, evanr):
+    def get_Station_information(self, evanr, lastValue=""):
         """
 
         :param evanr:
@@ -269,11 +284,18 @@ class QuerySuite:
         """
         limit_storage = self.limit
         self.limit = 30000
-        query = "SELECT zuege.arzeitist, zuege.arzeitsoll, zuege.dpzeitist, zuege.dpzeitsoll" \
-                " FROM `zuege` WHERE zuege.evanr = \"{}\"".format(evanr)
+        if lastValue == "":
+            query = "SELECT zuege.arzeitist, zuege.arzeitsoll, zuege.dpzeitist, zuege.dpzeitsoll, `zuege`.`yymmddhhmm` " \
+                    "FROM `zuege` " \
+                    "WHERE zuege.evanr = \"{}\" ORDER BY `zuege`.`yymmddhhmm` ASC".format(evanr)
+        else:
+            query = "SELECT zuege.arzeitist, zuege.arzeitsoll, zuege.dpzeitist, zuege.dpzeitsoll, `zuege`.`yymmddhhmm` " \
+                "FROM `zuege` " \
+                "WHERE zuege.evanr = \"{}\" AND yymmddhhmm > {} ORDER BY `zuege`.`yymmddhhmm` ASC"\
+            .format(evanr, lastValue)
         result = self._do_query(query)
         self.limit = limit_storage
-        result_df = pd.DataFrame(data=list(result), columns=["arzeitist", "arzeitsoll", "dpzeitist", "dpzeitsoll"])
+        result_df = pd.DataFrame(data=list(result), columns=["arzeitist", "arzeitsoll", "dpzeitist", "dpzeitsoll", "yymmddhhmm"])
         result_df = self._concat_query_info_to_data_frame(result_df, evanr, "evanr")
         return result_df
 
@@ -288,5 +310,51 @@ class QuerySuite:
             query = "SELECT `haltestellen`.`EVA_NR` FROM `haltestellen` WHERE `haltestellen`.`EVA_NR` > {} ".format(lastkey)
         result = self._do_query(query)
         result_df = pd.DataFrame(data=list(result), columns=["EVA_NR"])
+        return result_df
+
+    def set_AverageState(self, Description, Average, Count, lastValue):
+        """
+        Saves the state from Average calculation to database
+        :param Description: identifier of calculation
+        :param Average: courrent average
+        :param Count: courrent count
+        :param lastValue: last date used
+        """
+        query = "INSERT INTO `AverageState` (`Description`, `Average`, `Count`, `lastValue`) " \
+                "VALUES (\"{}\", {}, {}, {})".format(Description, Average, Count, lastValue)
+        return self._execute_statement(query)
+
+    def update_AverageState(self, Description, Average, Count, lastValue):
+        """
+        Saves the state from Average calculation to database
+        :param Description: identifier of calculation
+        :param Average: courrent average
+        :param Count: courrent count
+        :param lastValue: last date used
+        """
+        query = "UPDATE `AverageState` SET `Average` = {}, `Count` = {}, `lastValue` = {} " \
+                "WHERE `AverageState`.`Description` = \"{}\"".format(Average,   Count, lastValue, Description)
+        return self._execute_statement(query)
+
+    def get_AverageState(self, Description):
+        """
+        reads the state from Average calculation to database
+        :param Description: identifier of calculation
+        :return: state of Average
+        """
+        query = "SELECT * FROM `AverageState` WHERE Description = \"{}\"".format(Description)
+        result_df = pd.DataFrame(data=list(self._do_query(query)),
+                                 columns=["Description", "Average", "Count", "lastValue"])
+        return result_df
+
+    def get_AverageStatelike(self, Description):
+        """
+        reads the state from Average calculation to database
+        :param Description: identifier of calculation
+        :return: state of Average
+        """
+        query = "SELECT * FROM `AverageState` WHERE Description LIKE \"{}\"".format(str(Description)+"%")
+        result_df = pd.DataFrame(data=list(self._do_query(query)),
+                                 columns=["Description", "Average", "Count", "lastValue"])
         return result_df
 

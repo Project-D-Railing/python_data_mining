@@ -1,9 +1,10 @@
 import query_suite
 import pandas as pd
-import numpy as np
+from datetime import timedelta
 import time
 import JsonFileHolder
 import processing_utils as pu
+
 
 DEBUG = True
 
@@ -31,36 +32,79 @@ def Station_Time_Average(evanr=8011160):
         print("EVA: {}".format(evanr))
         print("init: {}".format(init - start))
 
-    # get stops on trip
-    # ttsids = qsp.get_ttsid_on_trip(dailytripid="-5016615278318514860", yymmddhhmm="1712011704")
-    ttsids = pd.DataFrame(qsp.get_Station_information(evanr))
-
     returnvalue = {}
-    arzeitdelaysum = np.array([])
-    dpzeitdelaysum = np.array([])
-    staytimedelaysum = np.array([])
+    artimetdelaysum = 0
+    artimeCount = 0
+    artimelastValue = 0
+    artimenew = True
+    dptimedelaysum = 0
+    dptimeCount = 0
+    dptimelastValue = 0
+    dptimenew = True
+    staytimedelaysum = 0
+    staytimeCount = 0
+    staytimelastValue = 0
+    staytimenew = True
+    states = qsp.get_AverageStatelike(evanr)
+    for index, row in states.iterrows():
+        description = row["Description"][7:]
+        if description == "artime":
+            artimeCount = row["Count"]
+            artimelastValue = row["lastValue"]
+            artimetdelaysum = row["Average"] * artimeCount
+            artimenew = False
+        if description == "dptime":
+            dptimeCount =  row["Count"]
+            dptimelastValue = row["lastValue"]
+            dptimedelaysum = row["Average"] * dptimeCount
+            dptimenew = False
+        if description == "staytime":
+            staytimeCount = row["Count"]
+            staytimelastValue = row["lastValue"]
+            staytimedelaysum = row["Average"] * staytimeCount
+            staytimenew = False
+        pass
+    lastValue = max(artimelastValue, dptimelastValue, staytimelastValue)
+    ttsids = pd.DataFrame(qsp.get_Station_information(evanr, lastValue))
+
+    gether_data = time.time()
+    if DEBUG:
+        print("gether_data: {}".format(gether_data - start))
 
     for index, row in ttsids.iterrows():
         arzeitsoll = row["arzeitsoll"]
         arzeitist = row["arzeitist"]
         dpzeitist= row["dpzeitist"]
         dpzeitsoll= row["dpzeitsoll"]
+        yymmddhhmm= row["yymmddhhmm"]
         if type(arzeitist) is pd._libs.tslib.Timedelta and type(arzeitsoll) is pd._libs.tslib.Timedelta:
-            arzeitdelaysum = np.append(arzeitdelaysum, arzeitsoll - arzeitist)
+            artimetdelaysum += int((arzeitsoll - arzeitist).total_seconds())
+            artimeCount += 1
+            artimelastValue = yymmddhhmm
         if type(dpzeitist) is pd._libs.tslib.Timedelta and type(dpzeitsoll) is pd._libs.tslib.Timedelta:
-            dpzeitdelaysum = np.append(arzeitdelaysum, dpzeitsoll - dpzeitist)
+            dptimedelaysum += int((dpzeitsoll - dpzeitist).total_seconds())
+            dptimeCount += 1
+            dptimelastValue = yymmddhhmm
         if type(dpzeitist) is pd._libs.tslib.Timedelta and type(arzeitist) is pd._libs.tslib.Timedelta:
-            staytimedelaysum = np.append(arzeitdelaysum, dpzeitist - arzeitist)
-    if len(arzeitdelaysum) is not 0:
-        returnvalue["arzeitdelay"] = pu.strfdelta(arzeitdelaysum.mean(), "%s%D %H:%M:%S")
-    if len(dpzeitdelaysum) is not 0:
-        returnvalue["dpzeitdelay"] = pu.strfdelta(dpzeitdelaysum.mean(), "%s%D %H:%M:%S")
-    if len(staytimedelaysum) is not 0:
-        returnvalue["staytimedelay"] = pu.strfdelta(staytimedelaysum.mean(), "%s%D %H:%M:%S")
+            staytimedelaysum += int((dpzeitist - arzeitist).total_seconds())
+            staytimeCount += 1
+            staytimelastValue = yymmddhhmm
+    if artimetdelaysum is not 0:
+        average = int(artimetdelaysum/artimeCount)
+        writetoAverageState(artimeCount, artimelastValue, artimenew, average, evanr, "artime", qsp)
+        returnvalue["arzeitdelay"] = pu.strfdelta(timedelta(seconds=average), "%s%D %H:%M:%S")
+    if dptimedelaysum is not 0:
+        average = int(dptimedelaysum/dptimeCount)
+        writetoAverageState(dptimeCount, dptimelastValue, dptimenew, average, evanr, "dptime", qsp)
+        returnvalue["dpzeitdelay"] = pu.strfdelta(timedelta(seconds=average), "%s%D %H:%M:%S")
+    if staytimedelaysum is not 0:
+        average = int(staytimedelaysum/staytimeCount)
+        writetoAverageState(staytimeCount, staytimelastValue, staytimenew, average, evanr, "staytime", qsp)
+        returnvalue["staytimedelay"] = pu.strfdelta(timedelta(seconds=average), "%s%D %H:%M:%S")
 
-    gether_data = time.time()
+    Calculate_data = time.time()
     if DEBUG:
-        print("gether_data: {}".format(gether_data - start))
+        print("Calculate_data: {}".format(gether_data - start))
 
     # clean up
     qsp.disconnect()
@@ -71,6 +115,13 @@ def Station_Time_Average(evanr=8011160):
     return returnvalue
 
 
+def writetoAverageState(artimeCount, artimelastValue, artimenew, average, evanr, sufix, qsp):
+    if artimenew:
+        qsp.set_AverageState(str(evanr) + sufix, average, artimeCount, artimelastValue)
+    else:
+        qsp.update_AverageState(str(evanr) + sufix, average, artimeCount, artimelastValue)
+
+
 def Calc_all_Station_Time():
     start = time.time()
 
@@ -78,22 +129,14 @@ def Calc_all_Station_Time():
     qsp = query_suite.QuerySuite(config="app_config.json", property_name="dbcconfig", limit=5000)
     jsonfile = JsonFileHolder.JsonHolder("jsontestfile.json")
     jsondata = jsonfile.jsondata.keys()
-    if len(jsondata) != 0:
-        lastkey = max(jsondata)
-    init = time.time()
-    if DEBUG:
-        print("init: {}".format(init - start))
-    if lastkey == 0:
-        eva_nummer = qsp.get_all_stationnumbers()
-    else:
-        eva_nummer = qsp.get_all_stationnumbers(lastkey)
+    eva_nummer = qsp.get_all_stationnumbers()
     for index, eva in eva_nummer.iterrows():
         jsonfile.writejsondata(eva["EVA_NR"], Station_Time_Average(evanr=eva["EVA_NR"]))
 
 
 # For Testing Reasons
 if DEBUG:
-    #test = Station_Time_Average(evanr=8000019)
+    test = Station_Time_Average(evanr= 8005785)
     test = Calc_all_Station_Time()
     print(test)
     pass
