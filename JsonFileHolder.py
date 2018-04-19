@@ -3,12 +3,12 @@ import os
 
 
 class JsonHolder:
-    def __init__(self, Filename):
-        self.Filename = Filename
-        if os.path.exists(Filename):
-            if os.path.isfile(Filename):
+    def __init__(self, filename):
+        self.Filename = filename
+        if os.path.exists(filename):
+            if os.path.isfile(filename):
                 try:
-                    file = open(Filename, 'r')
+                    file = open(filename, 'r')
                     jsonstring = file.read()
                     if jsonstring == "":
                         self.jsondata = {}
@@ -29,14 +29,10 @@ class JsonHolder:
         return self.jsondata[key]
 
     def writejsondata(self, key, value):
-        self.jsondata[key] = value
+        self.jsondata[str(key)] = value
         try:
             file = open(self.Filename, 'w')
             file.write(json.dumps(self.jsondata, sort_keys=True, indent=4))
         finally:
             file.close()
         pass
-
-
-test = JsonHolder("jsontestfile.json")
-test.writejsondata("RE524", 8452)

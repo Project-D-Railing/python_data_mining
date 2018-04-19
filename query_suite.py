@@ -276,3 +276,17 @@ class QuerySuite:
         result_df = pd.DataFrame(data=list(result), columns=["arzeitist", "arzeitsoll", "dpzeitist", "dpzeitsoll"])
         result_df = self._concat_query_info_to_data_frame(result_df, evanr, "evanr")
         return result_df
+
+    def get_all_stationnumbers(self, lastkey=""):
+        """
+        Retrieves the ttsids
+        'lastkey' specifies the key were to start.
+        """
+        if lastkey == "":
+            query = "SELECT `haltestellen`.`EVA_NR` FROM `haltestellen`"
+        else:
+            query = "SELECT `haltestellen`.`EVA_NR` FROM `haltestellen` WHERE `haltestellen`.`EVA_NR` > {} ".format(lastkey)
+        result = self._do_query(query)
+        result_df = pd.DataFrame(data=list(result), columns=["EVA_NR"])
+        return result_df
+

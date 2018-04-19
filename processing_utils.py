@@ -1,6 +1,6 @@
 import datetime
 import pandas as pd
-
+from string import Template
 
 # function from https://gist.github.com/hellpanderrr/599bce82ecc6934aa9e1
 def _sort_df(self, df, column_idx, key):
@@ -214,3 +214,29 @@ def calc_average_df(df_to_average, column):
     summation = df_to_average[column]
     length = len(df_to_average)
     return summation / length
+
+
+class DeltaTemplate(Template):
+    delimiter = "%"
+
+
+def strfdelta(td, fmt):
+
+    # Get the timedelta’s sign and absolute number of seconds.
+    sign = "-" if td.days < 0 else "+"
+    secs = abs(td).total_seconds()
+
+    # Break the seconds into more readable quantities.
+    days, rem = divmod(secs, 86400)  # seconds per day: 24 * 60 * 60
+    hours, rem = divmod(rem, 3600)  # seconds per hour: 60 * 60
+    mins, secs = divmod(rem, 60)
+
+    # Format (as per above answers) and return the result string.
+    t = DeltaTemplate(fmt)
+    return t.substitute(
+        s=sign,
+        D="{:d}".format(int(days)),
+        H="{:02d}".format(int(hours)),
+        M="{:02d}".format(int(mins)),
+        S="{:02d}".format(int(secs)),
+        )
