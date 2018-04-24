@@ -312,7 +312,7 @@ class QuerySuite:
         result_df = pd.DataFrame(data=list(result), columns=["EVA_NR"])
         return result_df
 
-    def set_AverageState(self, Description, Average, Count, lastValue):
+    def set_AverageState(self, eva, DescriptionID, Average, Count, lastValue):
         """
         Saves the state from Average calculation to database
         :param Description: identifier of calculation
@@ -320,11 +320,12 @@ class QuerySuite:
         :param Count: courrent count
         :param lastValue: last date used
         """
-        query = "INSERT INTO `AverageState` (`Description`, `Average`, `Count`, `lastValue`) " \
-                "VALUES (\"{}\", {}, {}, {})".format(Description, Average, Count, lastValue)
+        query = "INSERT INTO `AverageState` (`eva`, `DescriptionID`, `Average`, `Count`, `lastValue`) " \
+                "VALUES ({}, {}, {}, {}, {})".format(eva, DescriptionID, Average, Count, lastValue)
+
         return self._execute_statement(query)
 
-    def update_AverageState(self, Description, Average, Count, lastValue):
+    def update_AverageState(self, eva, DescriptionID, Average, Count, lastValue):
         """
         Saves the state from Average calculation to database
         :param Description: identifier of calculation
@@ -333,7 +334,7 @@ class QuerySuite:
         :param lastValue: last date used
         """
         query = "UPDATE `AverageState` SET `Average` = {}, `Count` = {}, `lastValue` = {} " \
-                "WHERE `AverageState`.`Description` = \"{}\"".format(Average,   Count, lastValue, Description)
+                "WHERE `AverageState`.`eva` = {} AND `AverageState`.`DescriptionID` = {}".format(Average, Count, lastValue, eva, DescriptionID)
         return self._execute_statement(query)
 
     def get_AverageState(self, Description):
@@ -347,14 +348,14 @@ class QuerySuite:
                                  columns=["Description", "Average", "Count", "lastValue"])
         return result_df
 
-    def get_AverageStatelike(self, Description):
+    def get_AverageStatelike(self, eva):
         """
         reads the state from Average calculation to database
-        :param Description: identifier of calculation
+        :param eva: identifier of calculation
         :return: state of Average
         """
-        query = "SELECT * FROM `AverageState` WHERE Description LIKE \"{}\"".format(str(Description)+"%")
+        query = "SELECT * FROM `AverageState` WHERE eva ={}".format(eva)
         result_df = pd.DataFrame(data=list(self._do_query(query)),
-                                 columns=["Description", "Average", "Count", "lastValue"])
+                                 columns=["ID", "eva", "DescriptionID", "Average", "Count", "lastValue"])
         return result_df
 
