@@ -25,11 +25,13 @@ def concat_query_info_to_data_frame(df, info, columnname):
     return result_df
 
 
-def Station_Time_Average(evanr=8011160):
+def Station_Time_Average(evanr=8011160, qsp=""):
     start = time.time()
-
-    # setup query suite
-    qsp = query_suite.QuerySuite(config="app_config.json", property_name="dbcconfig", limit=5000)
+    close = False
+    if qsp == "":
+        # setup query suite
+        qsp = query_suite.QuerySuite(config="app_config.json", property_name="dbcconfig", limit=50000)
+        close = True
 
     init = time.time()
     if DEBUG:
@@ -110,8 +112,9 @@ def Station_Time_Average(evanr=8011160):
     if DEBUG:
         print("Calculate_data: {}".format(gether_data - start))
 
-    # clean up
-    qsp.disconnect()
+    if close:
+        # clean up
+        qsp.disconnect()
 
     end = time.time()
     if DEBUG:
@@ -134,7 +137,7 @@ def Calc_all_Station_Time():
     qsp = query_suite.QuerySuite(config="app_config.json", property_name="dbcconfig", limit=5000)
     eva_nummer = qsp.get_all_stationnumbers()
     for index, eva in eva_nummer.iterrows():
-        Station_Time_Average(evanr=eva["EVA_NR"])
+        Station_Time_Average(evanr=eva["EVA_NR"], qsp=qsp)
     end = time.time()
     print("Global endtime: {}".format((end - start)))
 
