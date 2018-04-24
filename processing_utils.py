@@ -222,7 +222,7 @@ class DeltaTemplate(Template):
 
 def strfdelta(td, fmt):
 
-    # Get the timedelta’s sign and absolute number of seconds.
+    # Get the timedeltas sign and absolute number of seconds.
     sign = "-" if td.days < 0 else "+"
     secs = abs(td).total_seconds()
 
