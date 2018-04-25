@@ -358,3 +358,16 @@ class QuerySuite:
                                  columns=["Description", "Average", "Count", "lastValue"])
         return result_df
 
+
+    def get_all_yymmddhhmm_of_dailytripid(self, dailytripid):
+        """
+        Returns all yymmddhhmm attributes that exist for given dailytripid.
+        :param dailytripid: dailytrip to find all yymmddhhmm for.
+        :return: pandas dataframe;
+        """
+        query = "SELECT DISTINCT zuege.yymmddhhmm FROM zuege WHERE zuege.dailytripid = \"{}\" " \
+                "ORDER BY CONVERT(zuege.yymmddhhmm, UNSIGNED INT)"
+        query = query.format(dailytripid)
+        result = self._do_query(query)
+        result_df = pd.DataFrame(data=list(result), columns=["yymmddhhmm"])
+        return result_df
