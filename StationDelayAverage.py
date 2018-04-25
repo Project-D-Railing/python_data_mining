@@ -123,11 +123,11 @@ def Station_Time_Average(evanr=8011160, qsp=""):
     return returnvalue
 
 
-def writetoAverageState(artimeCount, artimelastValue, artimenew, average, evanr, Description_id, qsp):
-    if artimenew:
-        qsp.set_AverageState(evanr, Description_id, average, artimeCount, artimelastValue)
+def writetoAverageState(Count, lastValue, sometingnew, average, evanr, Description_id, qsp):
+    if sometingnew:
+        qsp.set_AverageState(evanr, Description_id, average, Count, lastValue)
     else:
-        qsp.update_AverageState(evanr, Description_id, average, artimeCount, artimelastValue)
+        qsp.update_AverageState(evanr, Description_id, average, Count, lastValue)
 
 
 def Calc_all_Station_Time():

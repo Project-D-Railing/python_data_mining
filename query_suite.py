@@ -287,11 +287,11 @@ class QuerySuite:
         if lastValue == "":
             query = "SELECT zuege.arzeitist, zuege.arzeitsoll, zuege.dpzeitist, zuege.dpzeitsoll, `zuege`.`yymmddhhmm` " \
                     "FROM `zuege` " \
-                    "WHERE zuege.evanr = \"{}\" ORDER BY `zuege`.`yymmddhhmm` ASC".format(evanr)
+                    "WHERE zuege.evanr = \"{}\" ORDER BY `zuege`.`ID` ASC".format(evanr)
         else:
             query = "SELECT zuege.arzeitist, zuege.arzeitsoll, zuege.dpzeitist, zuege.dpzeitsoll, `zuege`.`yymmddhhmm` " \
                 "FROM `zuege` " \
-                "WHERE zuege.evanr = \"{}\" AND yymmddhhmm > {} ORDER BY `zuege`.`yymmddhhmm` ASC"\
+                "WHERE `zuege`.`evanr` = \"{}\" AND `zuege`.`ID` > {} ORDER BY `zuege`.`ID` ASC"\
             .format(evanr, lastValue)
         result = self._do_query(query)
         self.limit = limit_storage
@@ -318,7 +318,7 @@ class QuerySuite:
         :param Description: identifier of calculation
         :param Average: courrent average
         :param Count: courrent count
-        :param lastValue: last date used
+        :param lastValue: last Value used
         """
         query = "INSERT INTO `AverageState` (`eva`, `DescriptionID`, `Average`, `Count`, `lastValue`) " \
                 "VALUES ({}, {}, {}, {}, {})".format(eva, DescriptionID, Average, Count, lastValue)
