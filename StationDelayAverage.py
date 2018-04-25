@@ -2,11 +2,15 @@ import query_suite
 import pandas as pd
 from datetime import timedelta
 import time
-import JsonFileHolder
+import os
 import processing_utils as pu
 
 
 DEBUG = True
+
+artime = 1
+dptime = 2
+staytime = 3
 
 
 def concat_query_info_to_data_frame(df, info, columnname):
@@ -21,11 +25,13 @@ def concat_query_info_to_data_frame(df, info, columnname):
     return result_df
 
 
-def Station_Time_Average(evanr=8011160):
+def Station_Time_Average(evanr=8011160, qsp=""):
     start = time.time()
-
-    # setup query suite
-    qsp = query_suite.QuerySuite(config="app_config.json", property_name="dbcconfig", limit=5000)
+    close = False
+    if qsp == "":
+        # setup query suite
+        qsp = query_suite.QuerySuite(config="app_config.json", property_name="dbcconfig", limit=50000)
+        close = True
 
     init = time.time()
     if DEBUG:
@@ -47,18 +53,18 @@ def Station_Time_Average(evanr=8011160):
     staytimenew = True
     states = qsp.get_AverageStatelike(evanr)
     for index, row in states.iterrows():
-        description = row["Description"][7:]
-        if description == "artime":
+        description = int(row["DescriptionID"])
+        if description == artime:
             artimeCount = row["Count"]
             artimelastValue = row["lastValue"]
             artimetdelaysum = row["Average"] * artimeCount
             artimenew = False
-        if description == "dptime":
+        if description == dptime:
             dptimeCount =  row["Count"]
             dptimelastValue = row["lastValue"]
             dptimedelaysum = row["Average"] * dptimeCount
             dptimenew = False
-        if description == "staytime":
+        if description == staytime:
             staytimeCount = row["Count"]
             staytimelastValue = row["lastValue"]
             staytimedelaysum = row["Average"] * staytimeCount
@@ -78,65 +84,71 @@ def Station_Time_Average(evanr=8011160):
         dpzeitsoll= row["dpzeitsoll"]
         yymmddhhmm= row["yymmddhhmm"]
         if type(arzeitist) is pd._libs.tslib.Timedelta and type(arzeitsoll) is pd._libs.tslib.Timedelta:
-            artimetdelaysum += int((arzeitsoll - arzeitist).total_seconds())
+            artimetdelaysum += int((arzeitist - arzeitsoll).total_seconds())
             artimeCount += 1
             artimelastValue = yymmddhhmm
         if type(dpzeitist) is pd._libs.tslib.Timedelta and type(dpzeitsoll) is pd._libs.tslib.Timedelta:
-            dptimedelaysum += int((dpzeitsoll - dpzeitist).total_seconds())
+            dptimedelaysum += int((dpzeitist - dpzeitsoll).total_seconds())
             dptimeCount += 1
             dptimelastValue = yymmddhhmm
         if type(dpzeitist) is pd._libs.tslib.Timedelta and type(arzeitist) is pd._libs.tslib.Timedelta:
-            staytimedelaysum += int((dpzeitist - arzeitist).total_seconds())
+            staytimedelaysum += int(((arzeitist - dpzeitist) - (arzeitsoll - dpzeitsoll)).total_seconds())
             staytimeCount += 1
             staytimelastValue = yymmddhhmm
     if artimetdelaysum is not 0:
         average = int(artimetdelaysum/artimeCount)
-        writetoAverageState(artimeCount, artimelastValue, artimenew, average, evanr, "artime", qsp)
+        writetoAverageState(artimeCount, artimelastValue, artimenew, average, evanr, artime, qsp)
         returnvalue["arzeitdelay"] = pu.strfdelta(timedelta(seconds=average), "%s%D %H:%M:%S")
     if dptimedelaysum is not 0:
         average = int(dptimedelaysum/dptimeCount)
-        writetoAverageState(dptimeCount, dptimelastValue, dptimenew, average, evanr, "dptime", qsp)
+        writetoAverageState(dptimeCount, dptimelastValue, dptimenew, average, evanr, dptime, qsp)
         returnvalue["dpzeitdelay"] = pu.strfdelta(timedelta(seconds=average), "%s%D %H:%M:%S")
     if staytimedelaysum is not 0:
         average = int(staytimedelaysum/staytimeCount)
-        writetoAverageState(staytimeCount, staytimelastValue, staytimenew, average, evanr, "staytime", qsp)
+        writetoAverageState(staytimeCount, staytimelastValue, staytimenew, average, evanr, staytime, qsp)
         returnvalue["staytimedelay"] = pu.strfdelta(timedelta(seconds=average), "%s%D %H:%M:%S")
 
     Calculate_data = time.time()
     if DEBUG:
         print("Calculate_data: {}".format(gether_data - start))
 
-    # clean up
-    qsp.disconnect()
+    if close:
+        # clean up
+        qsp.disconnect()
 
     end = time.time()
     if DEBUG:
         print("end: {}".format(end - start))
+    print("_______________")
     return returnvalue
 
 
-def writetoAverageState(artimeCount, artimelastValue, artimenew, average, evanr, sufix, qsp):
-    if artimenew:
-        qsp.set_AverageState(str(evanr) + sufix, average, artimeCount, artimelastValue)
+def writetoAverageState(Count, lastValue, sometingnew, average, evanr, Description_id, qsp):
+    if sometingnew:
+        qsp.set_AverageState(evanr, Description_id, average, Count, lastValue)
     else:
-        qsp.update_AverageState(str(evanr) + sufix, average, artimeCount, artimelastValue)
+        qsp.update_AverageState(evanr, Description_id, average, Count, lastValue)
 
 
 def Calc_all_Station_Time():
     start = time.time()
-
+    filename = "testfile"
+    if (os.path.exists(filename)):
+        return
+    file = open(filename, 'w')
+    file.close()
     # setup query suite
     qsp = query_suite.QuerySuite(config="app_config.json", property_name="dbcconfig", limit=5000)
-    jsonfile = JsonFileHolder.JsonHolder("jsontestfile.json")
-    jsondata = jsonfile.jsondata.keys()
     eva_nummer = qsp.get_all_stationnumbers()
     for index, eva in eva_nummer.iterrows():
-        jsonfile.writejsondata(eva["EVA_NR"], Station_Time_Average(evanr=eva["EVA_NR"]))
-
+        Station_Time_Average(evanr=eva["EVA_NR"], qsp=qsp)
+    end = time.time()
+    print("Global endtime: {}".format((end - start)))
+    os.remove(filename)
 
 # For Testing Reasons
 if DEBUG:
-    test = Station_Time_Average(evanr= 8005785)
+    #test = Station_Time_Average(evanr= 8005785)
     test = Calc_all_Station_Time()
     print(test)
     pass

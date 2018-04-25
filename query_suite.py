@@ -28,7 +28,7 @@ class QuerySuite:
             for the database connection.
         """
         # read config file
-        config_file = open(config, "r", encoding='utf-8-sig', newline='\r\n')
+        config_file = open(config, "r")
         configuration = json.loads(config_file.read())
         config_file.close()
 
@@ -287,11 +287,11 @@ class QuerySuite:
         if lastValue == "":
             query = "SELECT zuege.arzeitist, zuege.arzeitsoll, zuege.dpzeitist, zuege.dpzeitsoll, `zuege`.`yymmddhhmm` " \
                     "FROM `zuege` " \
-                    "WHERE zuege.evanr = \"{}\" ORDER BY `zuege`.`yymmddhhmm` ASC".format(evanr)
+                    "WHERE zuege.evanr = \"{}\" ORDER BY `zuege`.`ID` ASC".format(evanr)
         else:
             query = "SELECT zuege.arzeitist, zuege.arzeitsoll, zuege.dpzeitist, zuege.dpzeitsoll, `zuege`.`yymmddhhmm` " \
                 "FROM `zuege` " \
-                "WHERE zuege.evanr = \"{}\" AND yymmddhhmm > {} ORDER BY `zuege`.`yymmddhhmm` ASC"\
+                "WHERE `zuege`.`evanr` = \"{}\" AND `zuege`.`ID` > {} ORDER BY `zuege`.`ID` ASC"\
             .format(evanr, lastValue)
         result = self._do_query(query)
         self.limit = limit_storage
@@ -312,19 +312,20 @@ class QuerySuite:
         result_df = pd.DataFrame(data=list(result), columns=["EVA_NR"])
         return result_df
 
-    def set_AverageState(self, Description, Average, Count, lastValue):
+    def set_AverageState(self, eva, DescriptionID, Average, Count, lastValue):
         """
         Saves the state from Average calculation to database
         :param Description: identifier of calculation
         :param Average: courrent average
         :param Count: courrent count
-        :param lastValue: last date used
+        :param lastValue: last Value used
         """
-        query = "INSERT INTO `AverageState` (`Description`, `Average`, `Count`, `lastValue`) " \
-                "VALUES (\"{}\", {}, {}, {})".format(Description, Average, Count, lastValue)
+        query = "INSERT INTO `AverageState` (`eva`, `DescriptionID`, `Average`, `Count`, `lastValue`) " \
+                "VALUES ({}, {}, {}, {}, {})".format(eva, DescriptionID, Average, Count, lastValue)
+
         return self._execute_statement(query)
 
-    def update_AverageState(self, Description, Average, Count, lastValue):
+    def update_AverageState(self, eva, DescriptionID, Average, Count, lastValue):
         """
         Saves the state from Average calculation to database
         :param Description: identifier of calculation
@@ -333,7 +334,7 @@ class QuerySuite:
         :param lastValue: last date used
         """
         query = "UPDATE `AverageState` SET `Average` = {}, `Count` = {}, `lastValue` = {} " \
-                "WHERE `AverageState`.`Description` = \"{}\"".format(Average,   Count, lastValue, Description)
+                "WHERE `AverageState`.`eva` = {} AND `AverageState`.`DescriptionID` = {}".format(Average, Count, lastValue, eva, DescriptionID)
         return self._execute_statement(query)
 
     def get_AverageState(self, Description):
@@ -347,15 +348,15 @@ class QuerySuite:
                                  columns=["Description", "Average", "Count", "lastValue"])
         return result_df
 
-    def get_AverageStatelike(self, Description):
+    def get_AverageStatelike(self, eva):
         """
         reads the state from Average calculation to database
-        :param Description: identifier of calculation
+        :param eva: identifier of calculation
         :return: state of Average
         """
-        query = "SELECT * FROM `AverageState` WHERE Description LIKE \"{}\"".format(str(Description)+"%")
+        query = "SELECT * FROM `AverageState` WHERE eva ={}".format(eva)
         result_df = pd.DataFrame(data=list(self._do_query(query)),
-                                 columns=["Description", "Average", "Count", "lastValue"])
+                                 columns=["ID", "eva", "DescriptionID", "Average", "Count", "lastValue"])
         return result_df
 
 
