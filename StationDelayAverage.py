@@ -2,7 +2,7 @@ import query_suite
 import pandas as pd
 from datetime import timedelta
 import time
-import JsonFileHolder
+import os
 import processing_utils as pu
 
 
@@ -132,7 +132,11 @@ def writetoAverageState(Count, lastValue, sometingnew, average, evanr, Descripti
 
 def Calc_all_Station_Time():
     start = time.time()
-
+    filename = "testfile"
+    if (os.path.exists(filename)):
+        return
+    file = open(filename, 'w')
+    file.close()
     # setup query suite
     qsp = query_suite.QuerySuite(config="app_config.json", property_name="dbcconfig", limit=5000)
     eva_nummer = qsp.get_all_stationnumbers()
@@ -140,6 +144,7 @@ def Calc_all_Station_Time():
         Station_Time_Average(evanr=eva["EVA_NR"], qsp=qsp)
     end = time.time()
     print("Global endtime: {}".format((end - start)))
+    os.remove(filename)
 
 # For Testing Reasons
 if DEBUG:

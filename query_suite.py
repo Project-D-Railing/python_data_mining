@@ -28,7 +28,7 @@ class QuerySuite:
             for the database connection.
         """
         # read config file
-        config_file = open(config, "r", encoding='utf-8-sig', newline='\r\n')
+        config_file = open(config, "r")
         configuration = json.loads(config_file.read())
         config_file.close()
 
