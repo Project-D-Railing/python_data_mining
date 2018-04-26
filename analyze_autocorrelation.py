@@ -7,10 +7,10 @@ def analyze(dailytripid):
     # setup query suite
     qs = query_suite.QuerySuite(config="app_config.json", property_name="dbcconfig", limit=5000)
 
-    # Alle Trips abrufen, die zur dailytripid passen
+    # get all yymmddhhmm that match the dailitripid
     trips_df = qs.get_all_yymmddhhmm_of_dailytripid(dailytripid=dailytripid)
 
-    # Für jeden Trip alle Stationen abrufen und im Accumulator sammeln
+    # get all stops of all trips and collect them in accumulator
     stops_accumulator = pd.DataFrame()
     for index, row in trips_df.iterrows():
         stops_on_trip = analyze_train_delay.analyze(dailytripid=dailytripid, yymmddhhmm=row["yymmddhhmm"])
@@ -18,9 +18,24 @@ def analyze(dailytripid):
         #analyze_train_delay.visualize(stops_on_trip)
         print("queries left: {}".format(len(trips_df.index)-index))
 
-    # Autokorrelation berechnen
-    autocorr_df = autocorrelation_over_entire_df(stops_accumulator, "delay_by_staytime", wrap_around=False)
-    return autocorr_df
+    # calculate autocorrelations
+    WRAP_AROUND_MODE = False
+    acf_delay_by_staytime_df = autocorrelation_over_entire_df(
+        stops_accumulator, "delay_by_staytime", wrap_around=WRAP_AROUND_MODE)
+    acf_delay_by_traveltime_df = autocorrelation_over_entire_df(
+        stops_accumulator, "delay_by_traveltime", wrap_around=WRAP_AROUND_MODE)
+    acf_delay_at_arrival_df = autocorrelation_over_entire_df(
+        stops_accumulator, "delay_at_arrival", wrap_around=WRAP_AROUND_MODE)
+    acf_delay_at_departure_df = autocorrelation_over_entire_df(
+        stops_accumulator, "delay_at_departure", wrap_around=WRAP_AROUND_MODE)
+
+
+    # construct result dataframe
+    result_df = acf_delay_by_staytime_df
+    result_df = pd.concat([result_df, acf_delay_by_traveltime_df["acf_delay_by_traveltime"]], axis=1)
+    result_df = pd.concat([result_df, acf_delay_at_arrival_df["acf_delay_at_arrival"]], axis=1)
+    result_df = pd.concat([result_df, acf_delay_at_departure_df["acf_delay_at_departure"]], axis=1)
+    return {"acf_df":result_df, "dailytripid":dailytripid}
 
 
 def autocorrelation_over_entire_df(data_df, column, wrap_around=False):
@@ -33,13 +48,13 @@ def autocorrelation_over_entire_df(data_df, column, wrap_around=False):
     :return:
     """
     N = len(data_df.index)
-    result_df_columns = ["k", "autocorrelation_"+column]
+    result_df_columns = ["acf_k", "acf_"+column]
     result_df = pd.DataFrame(columns=result_df_columns)
     for k in range(N):
         corr = autocorrelation_df(data_df, column, k, wrap_around)
         corr_df = pd.DataFrame(data=[[k, corr]], columns=result_df_columns)
         result_df = result_df.append(corr_df, ignore_index=True)
-        print("Autocorrelation of size N={} with shift k={}: {}".format(N, k, corr))
+        print("Autocorrelation of column \"{}\" with size N={} and shift k={}: {}".format(column, N, k, corr))
     return result_df
 
 
@@ -77,12 +92,19 @@ def autocorrelation_df(data_df, column, k, wrap_around=False):
     result = sum / N
     return result
 
-def visualize(data_df):
+def visualize(data):
     # Berechnete Werte der Autokorrelation visualisieren
-    autocorr_array = data_df["autocorrelation_delay_by_staytime"].values
-    plt.plot(autocorr_array)
+    title = "Autokorrelation von Verspätungen von dailytripid={}".format(data["dailytripid"])
+    legend = ["Verspätung bei Ankunft", "Verspätung bei Abfahrt", "Verspätung druch Haltezeit", "Verspätung durch Fahrtzeit"]
+
+    plt.plot(data["acf_df"]["acf_delay_at_arrival"].values, color="blue")
+    plt.plot(data["acf_df"]["acf_delay_at_departure"].values, color="purple")
+    plt.plot(data["acf_df"]["acf_delay_by_staytime"].values, color="orange")
+    plt.plot(data["acf_df"]["acf_delay_by_traveltime"].values, color="red")
+    plt.title(title)
+    plt.legend(legend, loc="best")
     plt.show()
 
 #examples
 #visualize(analyze(dailytripid=1307784265419680067))
-#visualize(analyze(dailytripid=2677562958045670522))
+visualize(analyze(dailytripid=2677562958045670522))
