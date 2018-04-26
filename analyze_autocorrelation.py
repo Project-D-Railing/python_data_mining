@@ -1,0 +1,88 @@
+import query_suite
+import pandas as pd
+import matplotlib.pyplot as plt
+import analyze_train_delay
+
+def analyze(dailytripid):
+    # setup query suite
+    qs = query_suite.QuerySuite(config="app_config.json", property_name="dbcconfig", limit=5000)
+
+    # Alle Trips abrufen, die zur dailytripid passen
+    trips_df = qs.get_all_yymmddhhmm_of_dailytripid(dailytripid=dailytripid)
+
+    # Für jeden Trip alle Stationen abrufen und im Accumulator sammeln
+    stops_accumulator = pd.DataFrame()
+    for index, row in trips_df.iterrows():
+        stops_on_trip = analyze_train_delay.analyze(dailytripid=dailytripid, yymmddhhmm=row["yymmddhhmm"])
+        stops_accumulator = stops_accumulator.append(stops_on_trip, ignore_index=True)
+        #analyze_train_delay.visualize(stops_on_trip)
+        print("queries left: {}".format(len(trips_df.index)-index))
+
+    # Autokorrelation berechnen
+    autocorr_df = autocorrelation_over_entire_df(stops_accumulator, "delay_by_staytime", wrap_around=False)
+    return autocorr_df
+
+
+def autocorrelation_over_entire_df(data_df, column, wrap_around=False):
+    """
+    Calculates autocorrelation over all possible shifts.
+    :param data_df: Dataframe that holds the signal to correlate with.
+    :param column: Column name that specifies which column of the dataframe should be used as signal.
+    :param wrap_around: Defines if correlation wraps around to the beginning of the signal when the shifting goes
+        outside of the dataframe bound. Defaults to false.
+    :return:
+    """
+    N = len(data_df.index)
+    result_df_columns = ["k", "autocorrelation_"+column]
+    result_df = pd.DataFrame(columns=result_df_columns)
+    for k in range(N):
+        corr = autocorrelation_df(data_df, column, k, wrap_around)
+        corr_df = pd.DataFrame(data=[[k, corr]], columns=result_df_columns)
+        result_df = result_df.append(corr_df, ignore_index=True)
+        print("Autocorrelation of size N={} with shift k={}: {}".format(N, k, corr))
+    return result_df
+
+
+def autocorrelation_df(data_df, column, k, wrap_around=False):
+    """
+    Calculates autokorrelation with given shift of k.
+    :param data_df: Dataframe containing the signal to correlate with.
+    :param column: Column name that specifies which column of the dataframe should be used as signal.
+    :param k: The shift of the correlation.
+    :param wrap_around: Defines if correlation wraps around to the beginning of the signal when the shifting goes
+        outside of the dataframe bound. Defaults to false.
+    :return: Value of computated corrrelation.
+    """
+    N = len(data_df.index)
+    sum = 0
+
+    for n in range(N):
+        value = data_df[column][n]
+
+        if wrap_around:
+            # get shifted value and continue with begin of series when shifting goes outside of dataframe bounds
+            value_shifted = data_df[column][(n+k)%N]
+        else:
+            # get shifted value and use NaT when shifting goes outside of dataframe bounds
+            value_shifted = data_df[column][n+k] if (n+k < N) else pd.NaT
+
+        # get total seconds of timedeltas and convert to minutes.
+        # sanatize by replacing NaT with 0 minutes
+        value = 0 if pd.isnull(value) else value.total_seconds()/60
+        value_shifted = 0 if pd.isnull(value_shifted) else value_shifted.total_seconds()/60
+        # calculate
+        mul = value * value_shifted
+        sum += mul
+
+    result = sum / N
+    return result
+
+def visualize(data_df):
+    # Berechnete Werte der Autokorrelation visualisieren
+    autocorr_array = data_df["autocorrelation_delay_by_staytime"].values
+    plt.plot(autocorr_array)
+    plt.show()
+
+#examples
+#visualize(analyze(dailytripid=1307784265419680067))
+#visualize(analyze(dailytripid=2677562958045670522))

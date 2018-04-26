@@ -149,7 +149,7 @@ def Calc_all_Station_Time():
 
 # For Testing Reasons
 if DEBUG:
-    test = Station_Time_Average(evanr= 8005785)
-    #test = Calc_all_Station_Time()
+    #test = Station_Time_Average(evanr= 8005785)
+    test = Calc_all_Station_Time()
     print(test)
     pass
