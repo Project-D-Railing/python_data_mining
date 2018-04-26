@@ -285,17 +285,17 @@ class QuerySuite:
         limit_storage = self.limit
         self.limit = 30000
         if lastValue == "":
-            query = "SELECT zuege.arzeitist, zuege.arzeitsoll, zuege.dpzeitist, zuege.dpzeitsoll, `zuege`.`yymmddhhmm` " \
+            query = "SELECT zuege.arzeitist, zuege.arzeitsoll, zuege.dpzeitist, zuege.dpzeitsoll, `zuege`.`ID` " \
                     "FROM `zuege` " \
                     "WHERE zuege.evanr = \"{}\" ORDER BY `zuege`.`ID` ASC".format(evanr)
         else:
-            query = "SELECT zuege.arzeitist, zuege.arzeitsoll, zuege.dpzeitist, zuege.dpzeitsoll, `zuege`.`yymmddhhmm` " \
+            query = "SELECT zuege.arzeitist, zuege.arzeitsoll, zuege.dpzeitist, zuege.dpzeitsoll, `zuege`.`ID` " \
                 "FROM `zuege` " \
                 "WHERE `zuege`.`evanr` = \"{}\" AND `zuege`.`ID` > {} ORDER BY `zuege`.`ID` ASC"\
             .format(evanr, lastValue)
         result = self._do_query(query)
         self.limit = limit_storage
-        result_df = pd.DataFrame(data=list(result), columns=["arzeitist", "arzeitsoll", "dpzeitist", "dpzeitsoll", "yymmddhhmm"])
+        result_df = pd.DataFrame(data=list(result), columns=["arzeitist", "arzeitsoll", "dpzeitist", "dpzeitsoll", "ID"])
         result_df = self._concat_query_info_to_data_frame(result_df, evanr, "evanr")
         return result_df
 

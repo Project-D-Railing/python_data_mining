@@ -82,19 +82,19 @@ def Station_Time_Average(evanr=8011160, qsp=""):
         arzeitist = row["arzeitist"]
         dpzeitist= row["dpzeitist"]
         dpzeitsoll= row["dpzeitsoll"]
-        yymmddhhmm= row["yymmddhhmm"]
+        ID= row["ID"]
         if type(arzeitist) is pd._libs.tslib.Timedelta and type(arzeitsoll) is pd._libs.tslib.Timedelta:
             artimetdelaysum += int((arzeitist - arzeitsoll).total_seconds())
             artimeCount += 1
-            artimelastValue = yymmddhhmm
+            artimelastValue = ID
         if type(dpzeitist) is pd._libs.tslib.Timedelta and type(dpzeitsoll) is pd._libs.tslib.Timedelta:
             dptimedelaysum += int((dpzeitist - dpzeitsoll).total_seconds())
             dptimeCount += 1
-            dptimelastValue = yymmddhhmm
+            dptimelastValue = ID
         if type(dpzeitist) is pd._libs.tslib.Timedelta and type(arzeitist) is pd._libs.tslib.Timedelta:
             staytimedelaysum += int(((arzeitist - dpzeitist) - (arzeitsoll - dpzeitsoll)).total_seconds())
             staytimeCount += 1
-            staytimelastValue = yymmddhhmm
+            staytimelastValue = ID
     if artimetdelaysum is not 0:
         average = int(artimetdelaysum/artimeCount)
         writetoAverageState(artimeCount, artimelastValue, artimenew, average, evanr, artime, qsp)
@@ -110,7 +110,7 @@ def Station_Time_Average(evanr=8011160, qsp=""):
 
     Calculate_data = time.time()
     if DEBUG:
-        print("Calculate_data: {}".format(gether_data - start))
+        print("Calculate_data: {}".format(Calculate_data - start))
 
     if close:
         # clean up
@@ -134,7 +134,7 @@ def Calc_all_Station_Time():
     start = time.time()
     filename = "testfile"
     if (os.path.exists(filename)):
-        return
+        return 1
     file = open(filename, 'w')
     file.close()
     # setup query suite
@@ -145,10 +145,11 @@ def Calc_all_Station_Time():
     end = time.time()
     print("Global endtime: {}".format((end - start)))
     os.remove(filename)
+    return 0
 
 # For Testing Reasons
 if DEBUG:
-    #test = Station_Time_Average(evanr= 8005785)
-    test = Calc_all_Station_Time()
+    test = Station_Time_Average(evanr= 8005785)
+    #test = Calc_all_Station_Time()
     print(test)
     pass
