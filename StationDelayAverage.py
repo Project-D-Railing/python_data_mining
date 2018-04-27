@@ -25,13 +25,16 @@ def concat_query_info_to_data_frame(df, info, columnname):
     return result_df
 
 
-def Station_Time_Average(evanr=8011160, qsp=""):
+def Station_Time_Average(evanr=8011160, qsp=None, qspinsert=None):
     start = time.time()
     close = False
-    if qsp == "":
+    if qsp is None:
         # setup query suite
-        qsp = query_suite.QuerySuite(config="app_config.json", property_name="dbcconfig", limit=50000)
+        qsp = query_suite.QuerySuite(config="app_config.json", property_name="dbcconfig", limit=5000)
         close = True
+
+    if qspinsert is None:
+        qspinsert = qsp
 
     init = time.time()
     if DEBUG:
@@ -51,7 +54,7 @@ def Station_Time_Average(evanr=8011160, qsp=""):
     staytimeCount = 0
     staytimelastValue = 0
     staytimenew = True
-    states = qsp.get_AverageStatelike(evanr)
+    states = qspinsert.get_AverageStatelike(evanr)
     for index, row in states.iterrows():
         description = int(row["DescriptionID"])
         if description == artime:
@@ -97,15 +100,15 @@ def Station_Time_Average(evanr=8011160, qsp=""):
             staytimelastValue = ID
     if artimetdelaysum is not 0:
         average = int(artimetdelaysum/artimeCount)
-        writetoAverageState(artimeCount, artimelastValue, artimenew, average, evanr, artime, qsp)
+        writetoAverageState(artimeCount, artimelastValue, artimenew, average, evanr, artime, qspinsert)
         returnvalue["arzeitdelay"] = pu.strfdelta(timedelta(seconds=average), "%s%D %H:%M:%S")
     if dptimedelaysum is not 0:
         average = int(dptimedelaysum/dptimeCount)
-        writetoAverageState(dptimeCount, dptimelastValue, dptimenew, average, evanr, dptime, qsp)
+        writetoAverageState(dptimeCount, dptimelastValue, dptimenew, average, evanr, dptime, qspinsert)
         returnvalue["dpzeitdelay"] = pu.strfdelta(timedelta(seconds=average), "%s%D %H:%M:%S")
     if staytimedelaysum is not 0:
         average = int(staytimedelaysum/staytimeCount)
-        writetoAverageState(staytimeCount, staytimelastValue, staytimenew, average, evanr, staytime, qsp)
+        writetoAverageState(staytimeCount, staytimelastValue, staytimenew, average, evanr, staytime, qspinsert)
         returnvalue["staytimedelay"] = pu.strfdelta(timedelta(seconds=average), "%s%D %H:%M:%S")
 
     Calculate_data = time.time()
@@ -115,7 +118,7 @@ def Station_Time_Average(evanr=8011160, qsp=""):
     if close:
         # clean up
         qsp.disconnect()
-
+    print(max(artimeCount, dptimeCount, staytimeCount))
     end = time.time()
     if DEBUG:
         print("end: {}".format(end - start))
@@ -123,11 +126,11 @@ def Station_Time_Average(evanr=8011160, qsp=""):
     return returnvalue
 
 
-def writetoAverageState(Count, lastValue, sometingnew, average, evanr, Description_id, qsp):
-    if sometingnew:
-        qsp.set_AverageState(evanr, Description_id, average, Count, lastValue)
+def writetoAverageState(artimeCount, artimelastValue, artimenew, average, evanr, Description_id, qspinsert):
+    if artimenew:
+        qspinsert.set_AverageState(evanr, Description_id, average, artimeCount, artimelastValue)
     else:
-        qsp.update_AverageState(evanr, Description_id, average, Count, lastValue)
+        qspinsert.update_AverageState(evanr, Description_id, average, artimeCount, artimelastValue)
 
 
 def Calc_all_Station_Time():
@@ -138,11 +141,18 @@ def Calc_all_Station_Time():
     file = open(filename, 'w')
     file.close()
     # setup query suite
-    qsp = query_suite.QuerySuite(config="app_config.json", property_name="dbcconfig", limit=5000)
+    qsp = query_suite.QuerySuite(config="app_config_Miner.json", property_name="dbcconfig", limit=7000)
+    qspinsert = query_suite.QuerySuite(config="app_config_Storage.json", property_name="dbcconfig", limit=7000)
     eva_nummer = qsp.get_all_stationnumbers()
+    #if you want to start it reversed
+    #eva_nummer = eva_nummer.sort_index(ascending=False, axis=0)
     for index, eva in eva_nummer.iterrows():
-        Station_Time_Average(evanr=eva["EVA_NR"], qsp=qsp)
+        Station_Time_Average(evanr=eva["EVA_NR"], qsp=qsp, qspinsert=qspinsert)
     end = time.time()
+    qsp.disconnect()
+    qspinsert.disconnect()
+    qsp = None
+    qspinsert = None
     print("Global endtime: {}".format((end - start)))
     os.remove(filename)
     return 0

@@ -5,3 +5,7 @@ app_config.json
 
 tests/.pytest_cache
 tests/app_config\.json
+
+app_config_Miner\.json
+
+app_config_Storage\.json

@@ -38,7 +38,7 @@ class QuerySuite:
         # connect to db
         try:
             self.dbc = pymysql.connect(**dbc_config)
-        except pymysql.connector.Error as err:
+        except Exception as err:
             print(err)
             self.dbc = None
 
@@ -285,11 +285,11 @@ class QuerySuite:
         limit_storage = self.limit
         self.limit = 30000
         if lastValue == "":
-            query = "SELECT zuege.arzeitist, zuege.arzeitsoll, zuege.dpzeitist, zuege.dpzeitsoll, `zuege`.`ID` " \
+            query = "SELECT zuege.arzeitist, zuege.arzeitsoll, zuege.dpzeitist, zuege.dpzeitsoll, Zuege.ID " \
                     "FROM `zuege` " \
                     "WHERE zuege.evanr = \"{}\" ORDER BY `zuege`.`ID` ASC".format(evanr)
         else:
-            query = "SELECT zuege.arzeitist, zuege.arzeitsoll, zuege.dpzeitist, zuege.dpzeitsoll, `zuege`.`ID` " \
+            query = "SELECT zuege.arzeitist, zuege.arzeitsoll, zuege.dpzeitist, zuege.dpzeitsoll, zuege.ID " \
                 "FROM `zuege` " \
                 "WHERE `zuege`.`evanr` = \"{}\" AND `zuege`.`ID` > {} ORDER BY `zuege`.`ID` ASC"\
             .format(evanr, lastValue)
@@ -304,11 +304,14 @@ class QuerySuite:
         Retrieves the ttsids
         'lastkey' specifies the key were to start.
         """
+        limit_storage = self.limit
+        self.limit = 7000
         if lastkey == "":
             query = "SELECT `haltestellen`.`EVA_NR` FROM `haltestellen`"
         else:
             query = "SELECT `haltestellen`.`EVA_NR` FROM `haltestellen` WHERE `haltestellen`.`EVA_NR` > {} ".format(lastkey)
         result = self._do_query(query)
+        self.limit = limit_storage
         result_df = pd.DataFrame(data=list(result), columns=["EVA_NR"])
         return result_df
 
